@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -16,7 +16,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, XCircle } from "lucide-react";
 
 interface CampaignSummary {
   id: string;
@@ -44,18 +43,17 @@ export default function ReportsPage() {
   const [campaigns, setCampaigns] = useState<CampaignSummary[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
 
-  const fetchData = useCallback(async () => {
-    const [campRes, statsRes] = await Promise.all([
-      fetch("/api/campaigns"),
-      fetch("/api/reports"),
-    ]);
-    if (campRes.ok) setCampaigns(await campRes.json());
-    if (statsRes.ok) setStats(await statsRes.json());
-  }, []);
-
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    async function load() {
+      const [campRes, statsRes] = await Promise.all([
+        fetch("/api/campaigns"),
+        fetch("/api/reports"),
+      ]);
+      if (campRes.ok) setCampaigns(await campRes.json());
+      if (statsRes.ok) setStats(await statsRes.json());
+    }
+    load();
+  }, []);
 
   const sentCampaigns = campaigns.filter((c) => c.status !== "DRAFT");
 

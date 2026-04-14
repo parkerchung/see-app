@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,16 +33,16 @@ export default function TemplatesPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({ name: "", subject: "", htmlBody: "" });
-
-  const fetchTemplates = useCallback(async () => {
-    const res = await fetch("/api/templates");
-    const data = await res.json();
-    setTemplates(data);
-  }, []);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
-    fetchTemplates();
-  }, [fetchTemplates]);
+    async function load() {
+      const res = await fetch("/api/templates");
+      const data = await res.json();
+      setTemplates(data);
+    }
+    load();
+  }, [refreshKey]);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -55,7 +55,7 @@ export default function TemplatesPage() {
       toast.success("範本已建立");
       setDialogOpen(false);
       setForm({ name: "", subject: "", htmlBody: "" });
-      fetchTemplates();
+      setRefreshKey((k) => k + 1);
     } else {
       toast.error("建立失敗");
     }
@@ -66,7 +66,7 @@ export default function TemplatesPage() {
     const res = await fetch(`/api/templates/${id}`, { method: "DELETE" });
     if (res.ok) {
       toast.success("範本已刪除");
-      fetchTemplates();
+      setRefreshKey((k) => k + 1);
     } else {
       toast.error("刪除失敗");
     }

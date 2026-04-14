@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -59,17 +59,17 @@ export default function CampaignDetailPage() {
   const router = useRouter();
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [sending, setSending] = useState(false);
-
-  const fetchCampaign = useCallback(async () => {
-    const res = await fetch(`/api/campaigns/${params.id}`);
-    if (res.ok) {
-      setCampaign(await res.json());
-    }
-  }, [params.id]);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
-    fetchCampaign();
-  }, [fetchCampaign]);
+    async function load() {
+      const res = await fetch(`/api/campaigns/${params.id}`);
+      if (res.ok) {
+        setCampaign(await res.json());
+      }
+    }
+    load();
+  }, [params.id, refreshKey]);
 
   async function handleSend() {
     if (!confirm("確定要發送此演練活動？信件將立即寄出。")) return;
@@ -80,7 +80,7 @@ export default function CampaignDetailPage() {
     const data = await res.json();
     if (res.ok) {
       toast.success(data.message);
-      fetchCampaign();
+      setRefreshKey((k) => k + 1);
     } else {
       toast.error(data.error || "發送失敗");
     }

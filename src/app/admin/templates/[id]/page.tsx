@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,18 +21,17 @@ export default function TemplateEditorPage() {
   const [template, setTemplate] = useState<Template | null>(null);
   const [form, setForm] = useState({ name: "", subject: "", htmlBody: "" });
 
-  const fetchTemplate = useCallback(async () => {
-    const res = await fetch(`/api/templates/${params.id}`);
-    if (res.ok) {
-      const data = await res.json();
-      setTemplate(data);
-      setForm({ name: data.name, subject: data.subject, htmlBody: data.htmlBody });
-    }
-  }, [params.id]);
-
   useEffect(() => {
-    fetchTemplate();
-  }, [fetchTemplate]);
+    async function load() {
+      const res = await fetch(`/api/templates/${params.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setTemplate(data);
+        setForm({ name: data.name, subject: data.subject, htmlBody: data.htmlBody });
+      }
+    }
+    load();
+  }, [params.id]);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();

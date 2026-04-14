@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,18 +46,17 @@ export default function NewCampaignPage() {
   );
   const [loading, setLoading] = useState(false);
 
-  const fetchData = useCallback(async () => {
-    const [empRes, tplRes] = await Promise.all([
-      fetch("/api/employees"),
-      fetch("/api/templates"),
-    ]);
-    setEmployees(await empRes.json());
-    setTemplates(await tplRes.json());
-  }, []);
-
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    async function load() {
+      const [empRes, tplRes] = await Promise.all([
+        fetch("/api/employees"),
+        fetch("/api/templates"),
+      ]);
+      setEmployees(await empRes.json());
+      setTemplates(await tplRes.json());
+    }
+    load();
+  }, []);
 
   function toggleEmployee(id: string) {
     setSelectedEmployees((prev) => {

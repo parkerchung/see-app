@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,23 +37,23 @@ const statusMap: Record<string, { label: string; variant: "default" | "secondary
 
 export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<CampaignSummary[]>([]);
-
-  const fetchCampaigns = useCallback(async () => {
-    const res = await fetch("/api/campaigns");
-    const data = await res.json();
-    setCampaigns(data);
-  }, []);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
-    fetchCampaigns();
-  }, [fetchCampaigns]);
+    async function load() {
+      const res = await fetch("/api/campaigns");
+      const data = await res.json();
+      setCampaigns(data);
+    }
+    load();
+  }, [refreshKey]);
 
   async function handleDelete(id: string) {
     if (!confirm("確定要刪除此活動？")) return;
     const res = await fetch(`/api/campaigns/${id}`, { method: "DELETE" });
     if (res.ok) {
       toast.success("活動已刪除");
-      fetchCampaigns();
+      setRefreshKey((k) => k + 1);
     } else {
       toast.error("刪除失敗");
     }

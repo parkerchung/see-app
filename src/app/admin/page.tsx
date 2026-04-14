@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Card,
@@ -45,18 +45,17 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [campaigns, setCampaigns] = useState<CampaignSummary[]>([]);
 
-  const fetchData = useCallback(async () => {
-    const [statsRes, campaignsRes] = await Promise.all([
-      fetch("/api/reports"),
-      fetch("/api/campaigns"),
-    ]);
-    if (statsRes.ok) setStats(await statsRes.json());
-    if (campaignsRes.ok) setCampaigns(await campaignsRes.json());
-  }, []);
-
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    async function load() {
+      const [statsRes, campaignsRes] = await Promise.all([
+        fetch("/api/reports"),
+        fetch("/api/campaigns"),
+      ]);
+      if (statsRes.ok) setStats(await statsRes.json());
+      if (campaignsRes.ok) setCampaigns(await campaignsRes.json());
+    }
+    load();
+  }, []);
 
   return (
     <div>

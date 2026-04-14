@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,16 +34,16 @@ export default function EmployeesPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Employee | null>(null);
   const [form, setForm] = useState({ name: "", email: "", department: "" });
-
-  const fetchEmployees = useCallback(async () => {
-    const res = await fetch("/api/employees");
-    const data = await res.json();
-    setEmployees(data);
-  }, []);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
-    fetchEmployees();
-  }, [fetchEmployees]);
+    async function load() {
+      const res = await fetch("/api/employees");
+      const data = await res.json();
+      setEmployees(data);
+    }
+    load();
+  }, [refreshKey]);
 
   function openCreate() {
     setEditing(null);
@@ -86,7 +86,7 @@ export default function EmployeesPage() {
       }
     }
     setDialogOpen(false);
-    fetchEmployees();
+    setRefreshKey((k) => k + 1);
   }
 
   async function handleDelete(id: string) {
@@ -94,9 +94,10 @@ export default function EmployeesPage() {
     const res = await fetch(`/api/employees/${id}`, { method: "DELETE" });
     if (res.ok) {
       toast.success("員工已刪除");
-      fetchEmployees();
+      setRefreshKey((k) => k + 1);
     } else {
-      toast.error("刪除失敗");
+      const data = await res.json();
+      toast.error(data.error || "刪除失敗");
     }
   }
 
