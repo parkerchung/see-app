@@ -34,3 +34,34 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## SEE 社交工程演練系統
+
+### 本機開發
+
+```bash
+# 1. 啟動 PostgreSQL
+docker compose up db -d
+
+# 2. 執行資料庫遷移
+npx prisma migrate dev --name init
+
+# 3. 執行 seed（建立管理員帳號 + 預設範本）
+npx prisma db seed
+
+# 4. 啟動開發伺服器
+npm run dev
+```
+
+管理員預設帳號：`admin@see.local` / `admin123`
+
+### GCP VM 部署（Docker Compose）
+
+```bash
+# 1. 建立 .env 檔案，填入實際的環境變數
+cp .env.example .env
+# 編輯 .env 填入 SMTP 密碼、NEXTAUTH_SECRET、BASE_URL 等
+
+# 2. 啟動
+docker compose up --build -d
+```

@@ -23,6 +23,10 @@
 # misc
 .DS_Store
 *.pem
+bash.exe.stackdump
+
+# infra docs (contains sensitive IPs/config)
+/docs/
 
 # debug
 npm-debug.log*
@@ -39,3 +43,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/src/generated/prisma
