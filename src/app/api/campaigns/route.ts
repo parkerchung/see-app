@@ -10,32 +10,37 @@ export async function GET() {
     orderBy: { createdAt: "desc" },
     include: {
       template: { select: { name: true } },
-      targets: {
-        include: {
-          events: true,
-        },
-      },
+      _count: { select: { targets: true } },
     },
   });
 
-  const result = campaigns.map((c) => ({
-    id: c.id,
-    name: c.name,
-    templateName: c.template.name,
-    status: c.status,
-    sentAt: c.sentAt,
-    createdAt: c.createdAt,
-    targetCount: c.targets.length,
-    sentCount: c.targets.filter((t) =>
-      t.events.some((e) => e.eventType === "EMAIL_SENT")
-    ).length,
-    clickedCount: c.targets.filter((t) =>
-      t.events.some((e) => e.eventType === "LINK_CLICKED")
-    ).length,
-    submittedCount: c.targets.filter((t) =>
-      t.events.some((e) => e.eventType === "CREDENTIALS_SUBMITTED")
-    ).length,
-  }));
+  const result = await Promise.all(
+    campaigns.map(async (c) => {
+      const [sentCount, clickedCount, submittedCount] = await Promise.all([
+        prisma.trackingEvent.count({
+          where: { campaignTarget: { campaignId: c.id }, eventType: "EMAIL_SENT" },
+        }),
+        prisma.trackingEvent.count({
+          where: { campaignTarget: { campaignId: c.id }, eventType: "LINK_CLICKED" },
+        }),
+        prisma.trackingEvent.count({
+          where: { campaignTarget: { campaignId: c.id }, eventType: "CREDENTIALS_SUBMITTED" },
+        }),
+      ]);
+      return {
+        id: c.id,
+        name: c.name,
+        templateName: c.template.name,
+        status: c.status,
+        sentAt: c.sentAt,
+        createdAt: c.createdAt,
+        targetCount: c._count.targets,
+        sentCount,
+        clickedCount,
+        submittedCount,
+      };
+    })
+  );
 
   return NextResponse.json(result);
 }

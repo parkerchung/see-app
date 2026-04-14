@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { checkCampaignCompletion } from "@/lib/campaign-status";
 
 // SECURITY: This endpoint records ONLY the fact that a submission occurred.
 // It NEVER receives, processes, or stores any credential data.
@@ -16,14 +17,20 @@ export async function POST(request: NextRequest) {
   });
 
   if (target) {
-    await prisma.trackingEvent.create({
-      data: {
-        campaignTargetId: target.id,
-        eventType: "CREDENTIALS_SUBMITTED",
-        ipAddress: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || null,
-        userAgent: request.headers.get("user-agent") || null,
-      },
+    const alreadySubmitted = await prisma.trackingEvent.findFirst({
+      where: { campaignTargetId: target.id, eventType: "CREDENTIALS_SUBMITTED" },
     });
+    if (!alreadySubmitted) {
+      await prisma.trackingEvent.create({
+        data: {
+          campaignTargetId: target.id,
+          eventType: "CREDENTIALS_SUBMITTED",
+          ipAddress: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || null,
+          userAgent: request.headers.get("user-agent") || null,
+        },
+      });
+      await checkCampaignCompletion(target.id);
+    }
   }
 
   return NextResponse.json({ redirectUrl: "/education" });

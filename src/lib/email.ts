@@ -34,7 +34,8 @@ export async function sendCampaign(campaignId: string) {
   const baseUrl = process.env.BASE_URL || "http://localhost:3000";
   let successCount = 0;
 
-  for (const target of campaign.targets) {
+  for (let i = 0; i < campaign.targets.length; i++) {
+    const target = campaign.targets[i];
     try {
       const trackingUrl = `${baseUrl}/api/track/click?token=${target.token}`;
       const pixelUrl = `${baseUrl}/api/track/pixel?token=${target.token}`;
@@ -63,7 +64,7 @@ export async function sendCampaign(campaignId: string) {
       successCount++;
 
       // Small delay between sends to avoid rate limiting
-      if (campaign.targets.indexOf(target) < campaign.targets.length - 1) {
+      if (i < campaign.targets.length - 1) {
         await new Promise((r) => setTimeout(r, 1000));
       }
     } catch (err) {
@@ -71,14 +72,15 @@ export async function sendCampaign(campaignId: string) {
     }
   }
 
+  const total = campaign.targets.length;
   await prisma.campaign.update({
     where: { id: campaignId },
     data: {
-      status: "SENT",
-      sentAt: new Date(),
+      status: successCount === 0 ? "DRAFT" : "SENT",
+      sentAt: successCount > 0 ? new Date() : undefined,
     },
   });
 
   transport.close();
-  return { total: campaign.targets.length, sent: successCount };
+  return { total, sent: successCount, failed: total - successCount };
 }

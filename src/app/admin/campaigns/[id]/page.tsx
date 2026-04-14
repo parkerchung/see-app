@@ -32,6 +32,7 @@ interface Campaign {
     id: string;
     employee: { name: string; email: string; department: string };
     events: Array<{
+      id: string;
       eventType: string;
       timestamp: string;
       ipAddress: string | null;
@@ -274,9 +275,9 @@ export default function CampaignDetailPage() {
                     new Date(a.timestamp).getTime() -
                     new Date(b.timestamp).getTime()
                 )
-                .map((event, i) => (
+                .map((event) => (
                   <div
-                    key={i}
+                    key={event.id}
                     className="flex items-center gap-4 text-sm py-2 border-b last:border-0"
                   >
                     <span className="text-gray-400 w-[160px] shrink-0">

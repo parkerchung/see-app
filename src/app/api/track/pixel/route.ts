@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { checkCampaignCompletion } from "@/lib/campaign-status";
 
 // 1x1 transparent GIF
 const PIXEL = Buffer.from(
@@ -16,14 +17,20 @@ export async function GET(request: NextRequest) {
     });
 
     if (target) {
-      await prisma.trackingEvent.create({
-        data: {
-          campaignTargetId: target.id,
-          eventType: "EMAIL_OPENED",
-          ipAddress: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || null,
-          userAgent: request.headers.get("user-agent") || null,
-        },
+      const alreadyOpened = await prisma.trackingEvent.findFirst({
+        where: { campaignTargetId: target.id, eventType: "EMAIL_OPENED" },
       });
+      if (!alreadyOpened) {
+        await prisma.trackingEvent.create({
+          data: {
+            campaignTargetId: target.id,
+            eventType: "EMAIL_OPENED",
+            ipAddress: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || null,
+            userAgent: request.headers.get("user-agent") || null,
+          },
+        });
+        await checkCampaignCompletion(target.id);
+      }
     }
   }
 
