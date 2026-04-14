@@ -15,10 +15,9 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
-          cache: npm
+          node-version: 22
 
-      - run: npm ci
+      - run: npm install
 
       - name: ESLint
         run: npm run lint
@@ -34,10 +33,9 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
-          cache: npm
+          node-version: 22
 
-      - run: npm ci
+      - run: npm install
 
       - name: Run Tests
         run: npm test
