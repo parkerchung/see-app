@@ -34,8 +34,7 @@ jobs:
       - name: Deploy
         run: |
           cp docker-compose.prod.yml /opt/see-app/docker-compose.yml
-          cd /opt/see-app
-          IMAGE_TAG=${{ github.sha }} docker compose up -d
+          IMAGE_TAG=${{ github.sha }} docker compose -f /opt/see-app/docker-compose.yml up -d
 
       - name: Cleanup dangling images
         run: docker image prune -f
