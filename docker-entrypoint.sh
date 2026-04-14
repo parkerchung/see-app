@@ -1,11 +1,13 @@
 #!/bin/sh
 set -e
 
+PRISMA="node ./node_modules/prisma/build/index.js"
+
 echo "Pushing database schema..."
-npx prisma db push --skip-generate
+$PRISMA db push --skip-generate
 
 echo "Running database seed..."
-npx prisma db seed || echo "Seed already applied or skipped."
+$PRISMA db seed || echo "Seed already applied or skipped."
 
 echo "Starting application..."
 node server.js
