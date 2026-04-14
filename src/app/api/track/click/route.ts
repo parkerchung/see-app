@@ -3,9 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { checkCampaignCompletion } from "@/lib/campaign-status";
 
 export async function GET(request: NextRequest) {
+  const baseUrl = process.env.BASE_URL || request.url;
   const token = request.nextUrl.searchParams.get("token");
   if (!token) {
-    return NextResponse.redirect(new URL("/education", request.url));
+    return NextResponse.redirect(new URL("/education", baseUrl));
   }
 
   const target = await prisma.campaignTarget.findUnique({
@@ -13,7 +14,7 @@ export async function GET(request: NextRequest) {
   });
 
   if (!target) {
-    return NextResponse.redirect(new URL("/education", request.url));
+    return NextResponse.redirect(new URL("/education", baseUrl));
   }
 
   // Record click event (only first click per target)
@@ -33,5 +34,5 @@ export async function GET(request: NextRequest) {
   }
 
   // Redirect to fake login page
-  return NextResponse.redirect(new URL(`/t/${token}`, request.url));
+  return NextResponse.redirect(new URL(`/t/${token}`, baseUrl));
 }
