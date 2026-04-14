@@ -1,0 +1,36 @@
+name: Deploy to GCP
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  IMAGE: asia-east1-docker.pkg.dev/blood-system-dev/tbms-image/see-app
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t $IMAGE:${{ github.sha }} \
+            -t $IMAGE:latest \
+            .
+
+      - name: Push to Artifact Registry
+        run: |
+          docker push $IMAGE:${{ github.sha }}
+          docker push $IMAGE:latest
+
+      - name: Deploy
+        run: |
+          cp docker-compose.prod.yml /opt/see-app/docker-compose.yml
+          cd /opt/see-app
+          IMAGE_TAG=${{ github.sha }} docker compose up -d
+
+      - name: Cleanup dangling images
+        run: docker image prune -f

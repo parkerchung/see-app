@@ -1,0 +1,24 @@
+services:
+  app:
+    image: asia-east1-docker.pkg.dev/blood-system-dev/tbms-image/see-app:${IMAGE_TAG:-latest}
+    ports:
+      - "3100:3000"
+    env_file: .env.prod
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    env_file: .env.prod
+    ports:
+      - "5434:5432"
+    volumes:
+      - /opt/see-app/data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
