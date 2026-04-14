@@ -6,6 +6,7 @@ RUN npm install
 
 # Stage 2: Build
 FROM node:22-alpine AS builder
+RUN apk add --no-cache openssl
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
