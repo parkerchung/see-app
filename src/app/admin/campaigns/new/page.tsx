@@ -188,7 +188,7 @@ export default function NewCampaignPage() {
                     onBlur={() => setTimeout(() => setTemplateDropdownOpen(false), 150)}
                   />
                   {templateDropdownOpen && (
-                    <div className="absolute z-10 bottom-full mb-1 w-full bg-white border rounded-md shadow-lg max-h-[200px] overflow-y-auto">
+                    <div className="absolute z-10 bottom-full mb-1 w-full bg-white border rounded-md shadow-lg max-h-[300px] overflow-y-auto">
                       {filteredTemplates.length === 0 ? (
                         <div className="px-3 py-2 text-sm text-gray-500">沒有符合的範本</div>
                       ) : (
