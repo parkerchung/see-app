@@ -89,13 +89,21 @@ export default function EmployeesPage() {
     setRefreshKey((k) => k + 1);
   }
 
+  async function parseCsvFile(file: File): Promise<string> {
+    // Try UTF-8 first, fallback to Big5 if garbled (common for Excel on zh-TW)
+    const text = await file.text();
+    if (!/\ufffd/.test(text)) return text;
+    const buffer = await file.arrayBuffer();
+    const decoder = new TextDecoder("big5");
+    return decoder.decode(buffer);
+  }
+
   function handleCsvImport(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const text = event.target?.result as string;
+    (async () => {
+      const text = await parseCsvFile(file);
       const lines = text.split(/\r?\n/).filter((line) => line.trim());
 
       // Skip header if first line looks like a header
@@ -126,8 +134,7 @@ export default function EmployeesPage() {
       } else {
         toast.error("匯入失敗");
       }
-    };
-    reader.readAsText(file);
+    })();
     e.target.value = "";
   }
 
