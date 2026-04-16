@@ -157,7 +157,7 @@ export default function NewCampaignPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-6">
-          <Card>
+          <Card className="overflow-visible">
             <CardHeader>
               <CardTitle>活動設定</CardTitle>
             </CardHeader>
@@ -188,7 +188,7 @@ export default function NewCampaignPage() {
                     onBlur={() => setTimeout(() => setTemplateDropdownOpen(false), 150)}
                   />
                   {templateDropdownOpen && (
-                    <div className="absolute z-10 bottom-full mb-1 w-full bg-white border rounded-md shadow-lg max-h-[300px] overflow-y-auto">
+                    <div className="absolute z-50 bottom-full mb-1 w-full bg-white border rounded-md shadow-lg max-h-[50vh] overflow-y-auto">
                       {filteredTemplates.length === 0 ? (
                         <div className="px-3 py-2 text-sm text-gray-500">沒有符合的範本</div>
                       ) : (
