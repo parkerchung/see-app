@@ -46,6 +46,8 @@ export default function NewCampaignPage() {
     new Set()
   );
   const [loading, setLoading] = useState(false);
+  const [templateSearch, setTemplateSearch] = useState("");
+  const [templateDropdownOpen, setTemplateDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("");
 
@@ -60,6 +62,19 @@ export default function NewCampaignPage() {
     }
     load();
   }, []);
+
+  const filteredTemplates = useMemo(
+    () =>
+      templates.filter(
+        (tpl) =>
+          !templateSearch ||
+          tpl.name.toLowerCase().includes(templateSearch.toLowerCase()) ||
+          tpl.subject.toLowerCase().includes(templateSearch.toLowerCase())
+      ),
+    [templates, templateSearch]
+  );
+
+  const selectedTemplateName = templates.find((t) => t.id === templateId)?.name || "";
 
   const departments = useMemo(
     () => [...new Set(employees.map((e) => e.department))].sort(),
@@ -157,18 +172,46 @@ export default function NewCampaignPage() {
               </div>
               <div className="space-y-2">
                 <Label>選擇郵件範本</Label>
-                <Select value={templateId} onValueChange={(v) => setTemplateId(v ?? "")}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="請選擇範本" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {templates.map((tpl) => (
-                      <SelectItem key={tpl.id} value={tpl.id}>
-                        {tpl.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="relative">
+                  <Input
+                    placeholder="輸入關鍵字搜尋範本"
+                    value={templateDropdownOpen ? templateSearch : selectedTemplateName}
+                    onChange={(e) => {
+                      setTemplateSearch(e.target.value);
+                      setTemplateDropdownOpen(true);
+                      if (!e.target.value) setTemplateId("");
+                    }}
+                    onFocus={() => {
+                      setTemplateDropdownOpen(true);
+                      setTemplateSearch("");
+                    }}
+                    onBlur={() => setTimeout(() => setTemplateDropdownOpen(false), 150)}
+                  />
+                  {templateDropdownOpen && (
+                    <div className="absolute z-10 mt-1 w-full bg-white border rounded-md shadow-lg max-h-[200px] overflow-y-auto">
+                      {filteredTemplates.length === 0 ? (
+                        <div className="px-3 py-2 text-sm text-gray-500">沒有符合的範本</div>
+                      ) : (
+                        filteredTemplates.map((tpl) => (
+                          <div
+                            key={tpl.id}
+                            className={`px-3 py-2 text-sm cursor-pointer hover:bg-gray-100 ${
+                              tpl.id === templateId ? "bg-blue-50 font-medium" : ""
+                            }`}
+                            onMouseDown={() => {
+                              setTemplateId(tpl.id);
+                              setTemplateSearch("");
+                              setTemplateDropdownOpen(false);
+                            }}
+                          >
+                            <div>{tpl.name}</div>
+                            <div className="text-xs text-gray-400 truncate">{tpl.subject}</div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
