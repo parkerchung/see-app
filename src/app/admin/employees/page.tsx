@@ -19,7 +19,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 interface Employee {
@@ -89,6 +89,48 @@ export default function EmployeesPage() {
     setRefreshKey((k) => k + 1);
   }
 
+  function handleCsvImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const text = event.target?.result as string;
+      const lines = text.split(/\r?\n/).filter((line) => line.trim());
+
+      // Skip header if first line looks like a header
+      const firstLine = lines[0];
+      const startIndex =
+        firstLine && /姓名|name|email/i.test(firstLine) ? 1 : 0;
+
+      const rows = lines.slice(startIndex).map((line) => {
+        const [name, email, department] = line.split(",").map((s) => s.trim());
+        return { name, email, department };
+      });
+
+      if (rows.length === 0) {
+        toast.error("CSV 檔案沒有有效資料");
+        return;
+      }
+
+      const res = await fetch("/api/employees/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rows }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        toast.success(`匯入完成：新增 ${data.created} 人，跳過 ${data.skipped} 人`);
+        setRefreshKey((k) => k + 1);
+      } else {
+        toast.error("匯入失敗");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  }
+
   async function handleDelete(id: string) {
     if (!confirm("確定要刪除此員工？")) return;
     const res = await fetch(`/api/employees/${id}`, { method: "DELETE" });
@@ -105,13 +147,24 @@ export default function EmployeesPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">員工管理</h1>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger
-            render={<Button onClick={openCreate} />}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            新增員工
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <label className="cursor-pointer inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors">
+            <Upload className="h-4 w-4" />
+            CSV 匯入
+            <input
+              type="file"
+              accept=".csv"
+              className="hidden"
+              onChange={handleCsvImport}
+            />
+          </label>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger
+              render={<Button onClick={openCreate} />}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              新增員工
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{editing ? "編輯員工" : "新增員工"}</DialogTitle>
@@ -150,6 +203,7 @@ export default function EmployeesPage() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <div className="rounded-md border bg-white">
