@@ -29,6 +29,7 @@ interface CampaignSummary {
   templateName: string;
   status: string;
   targetCount: number;
+  openedCount: number;
   clickedCount: number;
   submittedCount: number;
   createdAt: string;
@@ -152,6 +153,7 @@ export default function AdminDashboard() {
                   <p className="text-sm text-gray-500 mb-2">{c.templateName}</p>
                   <div className="flex gap-4 text-xs text-gray-400">
                     <span>對象 {c.targetCount}</span>
+                    <span className="text-blue-500">開啟 {c.openedCount}</span>
                     <span className="text-orange-500">點擊 {c.clickedCount}</span>
                     <span className="text-red-500">提交 {c.submittedCount}</span>
                   </div>

@@ -16,9 +16,12 @@ export async function GET() {
 
   const result = await Promise.all(
     campaigns.map(async (c) => {
-      const [sentCount, clickedCount, submittedCount] = await Promise.all([
+      const [sentCount, openedCount, clickedCount, submittedCount] = await Promise.all([
         prisma.trackingEvent.count({
           where: { campaignTarget: { campaignId: c.id }, eventType: "EMAIL_SENT" },
+        }),
+        prisma.trackingEvent.count({
+          where: { campaignTarget: { campaignId: c.id }, eventType: "EMAIL_OPENED" },
         }),
         prisma.trackingEvent.count({
           where: { campaignTarget: { campaignId: c.id }, eventType: "LINK_CLICKED" },
@@ -36,6 +39,7 @@ export async function GET() {
         createdAt: c.createdAt,
         targetCount: c._count.targets,
         sentCount,
+        openedCount,
         clickedCount,
         submittedCount,
       };
