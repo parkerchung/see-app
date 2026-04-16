@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -19,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Search, X } from "lucide-react";
 import { toast } from "sonner";
 
 interface Employee {
@@ -45,6 +46,8 @@ export default function NewCampaignPage() {
     new Set()
   );
   const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [departmentFilter, setDepartmentFilter] = useState("");
 
   useEffect(() => {
     async function load() {
@@ -58,6 +61,22 @@ export default function NewCampaignPage() {
     load();
   }, []);
 
+  const departments = useMemo(
+    () => [...new Set(employees.map((e) => e.department))].sort(),
+    [employees]
+  );
+
+  const filteredEmployees = useMemo(() => {
+    return employees.filter((emp) => {
+      const matchSearch =
+        !searchQuery ||
+        emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        emp.email.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchDept = !departmentFilter || emp.department === departmentFilter;
+      return matchSearch && matchDept;
+    });
+  }, [employees, searchQuery, departmentFilter]);
+
   function toggleEmployee(id: string) {
     setSelectedEmployees((prev) => {
       const next = new Set(prev);
@@ -67,12 +86,18 @@ export default function NewCampaignPage() {
     });
   }
 
-  function toggleAll() {
-    if (selectedEmployees.size === employees.length) {
-      setSelectedEmployees(new Set());
-    } else {
-      setSelectedEmployees(new Set(employees.map((e) => e.id)));
-    }
+  function selectFiltered() {
+    setSelectedEmployees((prev) => {
+      const next = new Set(prev);
+      for (const emp of filteredEmployees) {
+        next.add(emp.id);
+      }
+      return next;
+    });
+  }
+
+  function clearAll() {
+    setSelectedEmployees(new Set());
   }
 
   async function handleCreate() {
@@ -160,42 +185,105 @@ export default function NewCampaignPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>選擇演練對象</span>
-              <Button variant="outline" size="sm" onClick={toggleAll}>
-                {selectedEmployees.size === employees.length
-                  ? "取消全選"
-                  : "全選"}
-              </Button>
-            </CardTitle>
+            <CardTitle>選擇演練對象</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            {/* Filters */}
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="搜尋姓名或 email"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <Select value={departmentFilter} onValueChange={(v) => setDepartmentFilter(v ?? "")}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="全部部門" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">全部部門</SelectItem>
+                  {departments.map((dept) => (
+                    <SelectItem key={dept} value={dept}>
+                      {dept}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={selectFiltered}>
+                全選目前列表 ({filteredEmployees.length})
+              </Button>
+              {selectedEmployees.size > 0 && (
+                <Button variant="outline" size="sm" onClick={clearAll}>
+                  <X className="h-3 w-3 mr-1" />
+                  清除全部
+                </Button>
+              )}
+            </div>
+
+            {/* Selected summary */}
+            {selectedEmployees.size > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {employees
+                  .filter((e) => selectedEmployees.has(e.id))
+                  .map((e) => (
+                    <Badge
+                      key={e.id}
+                      variant="secondary"
+                      className="cursor-pointer hover:bg-red-100"
+                      onClick={() => toggleEmployee(e.id)}
+                    >
+                      {e.name} ×
+                    </Badge>
+                  ))}
+              </div>
+            )}
+
+            {/* Employee list */}
             {employees.length === 0 ? (
               <p className="text-gray-500 text-center py-4">
                 尚未新增員工，請先至員工管理新增
               </p>
+            ) : filteredEmployees.length === 0 ? (
+              <p className="text-gray-500 text-center py-4">
+                沒有符合條件的員工
+              </p>
             ) : (
-              <div className="space-y-3 max-h-[400px] overflow-y-auto">
-                {employees.map((emp) => (
+              <div className="space-y-1 max-h-[350px] overflow-y-auto">
+                {filteredEmployees.map((emp) => (
                   <label
                     key={emp.id}
-                    className="flex items-center gap-3 p-2 rounded-md hover:bg-gray-50 cursor-pointer"
+                    className={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors ${
+                      selectedEmployees.has(emp.id)
+                        ? "bg-blue-50"
+                        : "hover:bg-gray-50"
+                    }`}
                   >
                     <Checkbox
                       checked={selectedEmployees.has(emp.id)}
                       onCheckedChange={() => toggleEmployee(emp.id)}
                     />
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <div className="font-medium text-sm">{emp.name}</div>
-                      <div className="text-xs text-gray-500">
-                        {emp.email} · {emp.department}
+                      <div className="text-xs text-gray-500 truncate">
+                        {emp.email}
                       </div>
                     </div>
+                    <span className="text-xs text-gray-400 shrink-0">
+                      {emp.department}
+                    </span>
                   </label>
                 ))}
               </div>
             )}
-            <div className="mt-4 pt-4 border-t text-sm text-gray-500">
+
+            <div className="pt-4 border-t text-sm font-medium">
               已選擇 {selectedEmployees.size} / {employees.length} 人
             </div>
           </CardContent>
