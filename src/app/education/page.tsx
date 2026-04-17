@@ -1,6 +1,24 @@
 import { ShieldAlert, Eye, Link2, Mail, AlertTriangle } from "lucide-react";
+import { prisma } from "@/lib/prisma";
 
-export default function EducationPage() {
+export default async function EducationPage() {
+  const setting = await prisma.siteSetting.findUnique({
+    where: { key: "educationHtml" },
+  });
+
+  // If custom HTML is set, render it
+  if (setting?.value) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white">
+        <div
+          className="max-w-3xl mx-auto px-6 py-16"
+          dangerouslySetInnerHTML={{ __html: setting.value }}
+        />
+      </div>
+    );
+  }
+
+  // Default education page
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white">
       <div className="max-w-3xl mx-auto px-6 py-16">

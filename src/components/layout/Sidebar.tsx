@@ -9,6 +9,7 @@ import {
   Mail,
   Target,
   BarChart3,
+  BookOpen,
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,7 @@ const navItems = [
   { href: "/admin/templates", label: "郵件範本", icon: Mail },
   { href: "/admin/campaigns", label: "演練活動", icon: Target },
   { href: "/admin/reports", label: "報告", icon: BarChart3 },
+  { href: "/admin/education", label: "教育頁面", icon: BookOpen },
 ];
 
 export default function Sidebar() {
