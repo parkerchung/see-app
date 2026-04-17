@@ -43,6 +43,11 @@ interface PhishingTemplate {
   builtIn: boolean;
 }
 
+interface EducationTemplate {
+  id: string;
+  name: string;
+}
+
 export default function NewCampaignPage() {
   const router = useRouter();
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -54,6 +59,8 @@ export default function NewCampaignPage() {
   );
   const [phishingTemplates, setPhishingTemplates] = useState<PhishingTemplate[]>([]);
   const [phishingTemplateId, setPhishingTemplateId] = useState("");
+  const [educationTemplates, setEducationTemplates] = useState<EducationTemplate[]>([]);
+  const [educationTemplateId, setEducationTemplateId] = useState("");
   const [loading, setLoading] = useState(false);
   const [templateSearch, setTemplateSearch] = useState("");
   const [templateDropdownOpen, setTemplateDropdownOpen] = useState(false);
@@ -62,14 +69,16 @@ export default function NewCampaignPage() {
 
   useEffect(() => {
     async function load() {
-      const [empRes, tplRes, ptRes] = await Promise.all([
+      const [empRes, tplRes, ptRes, etRes] = await Promise.all([
         fetch("/api/employees"),
         fetch("/api/templates"),
         fetch("/api/phishing-templates"),
+        fetch("/api/education-templates"),
       ]);
       setEmployees(await empRes.json());
       setTemplates(await tplRes.json());
       setPhishingTemplates(await ptRes.json());
+      setEducationTemplates(await etRes.json());
     }
     load();
   }, []);
@@ -140,6 +149,7 @@ export default function NewCampaignPage() {
         name,
         templateId,
         phishingTemplateId: phishingTemplateId || null,
+        educationTemplateId: educationTemplateId || null,
         employeeIds: Array.from(selectedEmployees),
       }),
     });
@@ -241,6 +251,24 @@ export default function NewCampaignPage() {
                 </Select>
                 <p className="text-xs text-gray-500">
                   未選擇時預設使用 Microsoft 登入頁面
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label>選擇教育說明頁面</Label>
+                <Select value={educationTemplateId} onValueChange={(v) => setEducationTemplateId(v ?? "")}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="使用系統預設頁面" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {educationTemplates.map((et) => (
+                      <SelectItem key={et.id} value={et.id}>
+                        {et.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500">
+                  未選擇時使用系統預設教育頁面
                 </p>
               </div>
             </CardContent>

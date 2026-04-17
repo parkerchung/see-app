@@ -14,6 +14,9 @@ export async function POST(request: NextRequest) {
 
   const target = await prisma.campaignTarget.findUnique({
     where: { token },
+    include: {
+      campaign: { select: { id: true, educationTemplateId: true } },
+    },
   });
 
   if (target) {
@@ -30,6 +33,12 @@ export async function POST(request: NextRequest) {
         },
       });
       await checkCampaignCompletion(target.id);
+    }
+
+    if (target.campaign.educationTemplateId) {
+      return NextResponse.json({
+        redirectUrl: `/education?tid=${target.campaign.educationTemplateId}`,
+      });
     }
   }
 

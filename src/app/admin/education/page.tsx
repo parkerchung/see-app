@@ -1,144 +1,243 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Plus, Eye, EyeOff, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-export default function EducationSettingPage() {
-  const router = useRouter();
-  const [html, setHtml] = useState("");
-  const [saved, setSaved] = useState("");
+interface EducationTemplate {
+  id: string;
+  name: string;
+  htmlBody?: string;
+  createdAt: string;
+}
+
+export default function EducationTemplatesPage() {
+  const [templates, setTemplates] = useState<EducationTemplate[]>([]);
+  const [editing, setEditing] = useState<EducationTemplate | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [name, setName] = useState("");
+  const [htmlBody, setHtmlBody] = useState("");
   const [preview, setPreview] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  async function loadTemplates() {
+    const res = await fetch("/api/education-templates");
+    setTemplates(await res.json());
+  }
 
   useEffect(() => {
-    fetch("/api/settings?key=educationHtml")
+    fetch("/api/education-templates")
       .then((r) => r.json())
-      .then((data) => {
-        if (data.value) {
-          setHtml(data.value);
-          setSaved(data.value);
-        }
-      });
+      .then(setTemplates);
   }, []);
 
-  const isDirty = html !== saved;
+  function startCreate() {
+    setEditing(null);
+    setCreating(true);
+    setName("");
+    setHtmlBody(DEFAULT_EDUCATION_HTML);
+    setPreview(false);
+  }
+
+  async function startEdit(id: string) {
+    const res = await fetch(`/api/education-templates/${id}`);
+    const tpl = await res.json();
+    setCreating(false);
+    setEditing(tpl);
+    setName(tpl.name);
+    setHtmlBody(tpl.htmlBody);
+    setPreview(false);
+  }
+
+  function cancelEdit() {
+    setEditing(null);
+    setCreating(false);
+  }
 
   async function handleSave() {
-    setLoading(true);
-    const res = await fetch("/api/settings", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key: "educationHtml", value: html }),
-    });
-    if (res.ok) {
-      setSaved(html);
-      toast.success("已儲存");
-    } else {
-      toast.error("儲存失敗");
+    if (!name.trim() || !htmlBody.trim()) {
+      toast.error("請填寫名稱和內容");
+      return;
     }
-    setLoading(false);
+
+    setSaving(true);
+
+    if (editing) {
+      const res = await fetch(`/api/education-templates/${editing.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, htmlBody }),
+      });
+      if (res.ok) {
+        toast.success("已更新");
+        cancelEdit();
+        loadTemplates();
+      } else {
+        toast.error("更新失敗");
+      }
+    } else {
+      const res = await fetch("/api/education-templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, htmlBody }),
+      });
+      if (res.ok) {
+        toast.success("已建立");
+        cancelEdit();
+        loadTemplates();
+      } else {
+        toast.error("建立失敗");
+      }
+    }
+
+    setSaving(false);
   }
 
-  async function handleReset() {
-    const res = await fetch("/api/settings", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key: "educationHtml", value: "" }),
-    });
+  async function handleDelete(id: string, tplName: string) {
+    if (!confirm(`確定要刪除「${tplName}」嗎？`)) return;
+
+    const res = await fetch(`/api/education-templates/${id}`, { method: "DELETE" });
     if (res.ok) {
-      setHtml("");
-      setSaved("");
-      toast.success("已恢復為預設內容");
+      toast.success("已刪除");
+      if (editing?.id === id) cancelEdit();
+      loadTemplates();
     } else {
-      toast.error("恢復失敗");
+      const data = await res.json();
+      toast.error(data.error || "刪除失敗");
     }
   }
 
-  return (
-    <div>
-      <Button
-        variant="ghost"
-        className="mb-4"
-        onClick={() => router.push("/admin")}
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        返回
-      </Button>
+  // Show editor
+  if (creating || editing) {
+    return (
+      <div>
+        <Button variant="ghost" className="mb-4" onClick={cancelEdit}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          返回列表
+        </Button>
 
-      <h1 className="text-2xl font-bold mb-6">教育說明頁面設定</h1>
+        <h1 className="text-2xl font-bold mb-6">
+          {editing ? `編輯：${editing.name}` : "新增教育頁面範本"}
+        </h1>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>頁面內容</span>
-            <div className="flex gap-2">
-              {html && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setPreview(!preview)}
-                >
-                  {preview ? (
-                    <><EyeOff className="h-4 w-4 mr-1" />編輯</>
-                  ) : (
-                    <><Eye className="h-4 w-4 mr-1" />預覽</>
-                  )}
-                </Button>
+        <Card>
+          <CardContent className="space-y-4 pt-6">
+            <div className="space-y-2">
+              <Label>範本名稱</Label>
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="例：標準版教育頁面"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>HTML 內容</Label>
+                {htmlBody && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setPreview(!preview)}
+                  >
+                    {preview ? (
+                      <><EyeOff className="h-4 w-4 mr-1" />編輯</>
+                    ) : (
+                      <><Eye className="h-4 w-4 mr-1" />預覽</>
+                    )}
+                  </Button>
+                )}
+              </div>
+
+              {preview && htmlBody ? (
+                <div
+                  className="border rounded-md p-4 min-h-[300px] max-h-[600px] overflow-y-auto"
+                  dangerouslySetInnerHTML={{ __html: htmlBody }}
+                />
+              ) : (
+                <textarea
+                  value={htmlBody}
+                  onChange={(e) => setHtmlBody(e.target.value)}
+                  placeholder="<h1>這是一次社交工程演練</h1>"
+                  className="w-full min-h-[300px] max-h-[600px] px-3 py-2 border rounded-md text-sm font-mono outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+                />
               )}
             </div>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-gray-500">
-            編輯使用者提交表單後看到的教育說明頁面。留空則使用系統預設內容。支援 HTML。
-          </p>
 
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setHtml(DEFAULT_EDUCATION_HTML)}
-              disabled={!!html}
-            >
-              載入預設範本
-            </Button>
-            {saved && (
-              <Button variant="outline" size="sm" onClick={handleReset}>
-                恢復為預設
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={cancelEdit}>取消</Button>
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? "儲存中..." : "儲存"}
               </Button>
-            )}
-          </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-          {preview && html ? (
-            <div
-              className="border rounded-md p-4 min-h-[300px] max-h-[600px] overflow-y-auto"
-              dangerouslySetInnerHTML={{ __html: html }}
-            />
-          ) : (
-            <textarea
-              value={html}
-              onChange={(e) => setHtml(e.target.value)}
-              placeholder="<h1>這是一次社交工程演練</h1><p>您剛才參與了一次釣魚郵件模擬測試...</p>"
-              className="w-full min-h-[300px] max-h-[600px] px-3 py-2 border rounded-md text-sm font-mono outline-none focus:ring-2 focus:ring-blue-500 resize-y"
-            />
-          )}
+  // Show template list
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">教育頁面範本</h1>
+        <Button onClick={startCreate}>
+          <Plus className="h-4 w-4 mr-2" />
+          新增範本
+        </Button>
+      </div>
 
-          <div className="flex justify-end">
-            <Button onClick={handleSave} disabled={loading || !isDirty}>
-              {loading ? "儲存中..." : "儲存"}
+      <p className="text-sm text-gray-500 mb-4">
+        建立多個教育說明頁面版本，在建立演練活動時選擇使用。未選擇時使用系統預設頁面。
+      </p>
+
+      {templates.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center text-gray-500">
+            <p>尚未建立任何教育頁面範本</p>
+            <Button className="mt-4" variant="outline" onClick={startCreate}>
+              建立第一個範本
             </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {templates.map((tpl) => (
+            <Card key={tpl.id}>
+              <CardHeader className="py-4">
+                <CardTitle className="flex items-center justify-between text-base">
+                  <span>{tpl.name}</span>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => startEdit(tpl.id)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(tpl.id, tpl.name)}
+                    >
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    </Button>
+                  </div>
+                </CardTitle>
+              </CardHeader>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -153,17 +252,17 @@ const DEFAULT_EDUCATION_HTML = `<div style="max-width: 700px; margin: 0 auto; pa
   </div>
 
   <div style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 32px; margin-bottom: 24px;">
-    <h2 style="font-size: 20px; font-weight: 600; margin: 0 0 16px;">⚠️ 發生了什麼事？</h2>
+    <h2 style="font-size: 20px; font-weight: 600; margin: 0 0 16px;">發生了什麼事？</h2>
     <p style="color: #555; line-height: 1.8;">您收到了一封看似來自公司內部的信件，並點擊了信中的連結，進入了一個模擬的登入頁面。在真實的釣魚攻擊中，攻擊者會利用這個假登入頁面竊取您的帳號密碼，進而存取公司機密資料、發送惡意信件、或進行財務詐騙。</p>
   </div>
 
   <div style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 32px; margin-bottom: 24px;">
     <h2 style="font-size: 20px; font-weight: 600; margin: 0 0 20px;">如何辨識釣魚郵件？</h2>
     <ul style="list-style: none; padding: 0; margin: 0;">
-      <li style="margin-bottom: 16px; padding-left: 36px; position: relative;"><span style="position: absolute; left: 0;">📧</span><strong>檢查寄件者地址</strong> — 仔細查看寄件者的電子郵件地址，釣魚信件常使用與公司相似但不完全相同的網域。</li>
-      <li style="margin-bottom: 16px; padding-left: 36px; position: relative;"><span style="position: absolute; left: 0;">🔗</span><strong>懸停查看連結</strong> — 點擊前將滑鼠懸停在連結上查看實際網址，如網址可疑請不要點擊。</li>
-      <li style="margin-bottom: 16px; padding-left: 36px; position: relative;"><span style="position: absolute; left: 0;">⚡</span><strong>注意緊急語氣</strong> — 釣魚信件常用緊急威脅語言，遇到時請保持冷靜先向 IT 確認。</li>
-      <li style="padding-left: 36px; position: relative;"><span style="position: absolute; left: 0;">👁️</span><strong>確認登入頁面網址</strong> — 輸入帳密前請確認瀏覽器網址列顯示的是官方網址。</li>
+      <li style="margin-bottom: 16px; padding-left: 36px; position: relative;"><span style="position: absolute; left: 0;">&#x1F4E7;</span><strong>檢查寄件者地址</strong> — 仔細查看寄件者的電子郵件地址，釣魚信件常使用與公司相似但不完全相同的網域。</li>
+      <li style="margin-bottom: 16px; padding-left: 36px; position: relative;"><span style="position: absolute; left: 0;">&#x1F517;</span><strong>懸停查看連結</strong> — 點擊前將滑鼠懸停在連結上查看實際網址，如網址可疑請不要點擊。</li>
+      <li style="margin-bottom: 16px; padding-left: 36px; position: relative;"><span style="position: absolute; left: 0;">&#x26A1;</span><strong>注意緊急語氣</strong> — 釣魚信件常用緊急威脅語言，遇到時請保持冷靜先向 IT 確認。</li>
+      <li style="padding-left: 36px; position: relative;"><span style="position: absolute; left: 0;">&#x1F441;</span><strong>確認登入頁面網址</strong> — 輸入帳密前請確認瀏覽器網址列顯示的是官方網址。</li>
     </ul>
   </div>
 

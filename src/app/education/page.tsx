@@ -3,21 +3,30 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-export default async function EducationPage() {
-  const setting = await prisma.siteSetting.findUnique({
-    where: { key: "educationHtml" },
-  });
+export default async function EducationPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tid?: string }>;
+}) {
+  const { tid } = await searchParams;
 
-  // If custom HTML is set, render it
-  if (setting?.value) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white">
-        <div
-          className="max-w-3xl mx-auto px-6 py-16"
-          dangerouslySetInnerHTML={{ __html: setting.value }}
-        />
-      </div>
-    );
+  // If a template ID is provided, render that template
+  if (tid) {
+    const template = await prisma.educationTemplate.findUnique({
+      where: { id: tid },
+      select: { htmlBody: true },
+    });
+
+    if (template) {
+      return (
+        <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white">
+          <div
+            className="max-w-3xl mx-auto px-6 py-16"
+            dangerouslySetInnerHTML={{ __html: template.htmlBody }}
+          />
+        </div>
+      );
+    }
   }
 
   // Default education page
