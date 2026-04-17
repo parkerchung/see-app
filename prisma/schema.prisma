@@ -78,12 +78,6 @@ model Campaign {
   targets CampaignTarget[]
 }
 
-model SiteSetting {
-  key       String   @id
-  value     String   @db.Text
-  updatedAt DateTime @updatedAt
-}
-
 enum CampaignStatus {
   DRAFT
   SENDING
