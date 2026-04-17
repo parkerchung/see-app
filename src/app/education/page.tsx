@@ -1,6 +1,8 @@
 import { ShieldAlert, Eye, Link2, Mail, AlertTriangle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export default async function EducationPage() {
   const setting = await prisma.siteSetting.findUnique({
     where: { key: "educationHtml" },
