@@ -4,7 +4,7 @@ set -e
 PRISMA="node ./node_modules/prisma/build/index.js"
 
 echo "Pushing database schema..."
-$PRISMA db push --skip-generate
+$PRISMA db push --skip-generate --accept-data-loss
 
 echo "Running database seed..."
 $PRISMA db seed || echo "Seed already applied or skipped."
