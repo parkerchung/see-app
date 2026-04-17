@@ -38,15 +38,31 @@ model EmailTemplate {
   campaigns Campaign[]
 }
 
+model PhishingTemplate {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  builtIn   Boolean  @default(false)
+  htmlBody  String?  @db.Text
+  thumbnail String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  campaigns Campaign[]
+}
+
 model Campaign {
-  id          String         @id @default(uuid())
-  name        String
-  templateId  String
-  template    EmailTemplate  @relation(fields: [templateId], references: [id])
-  status      CampaignStatus @default(DRAFT)
-  sentAt      DateTime?
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  id                 String            @id @default(uuid())
+  name               String
+  templateId         String
+  template           EmailTemplate     @relation(fields: [templateId], references: [id])
+  phishingTemplateId String?
+  phishingTemplate   PhishingTemplate? @relation(fields: [phishingTemplateId], references: [id])
+  educationHtml      String?           @db.Text
+  status             CampaignStatus    @default(DRAFT)
+  sentAt             DateTime?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
 
   targets CampaignTarget[]
 }

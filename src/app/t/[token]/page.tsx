@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
-import FakeLoginForm from "@/components/phishing/FakeLoginForm";
+import PhishingPageRenderer from "./PhishingPageRenderer";
 
 export default async function FakeLoginPage({
   params,
@@ -11,11 +11,29 @@ export default async function FakeLoginPage({
 
   const target = await prisma.campaignTarget.findUnique({
     where: { token },
+    include: {
+      campaign: {
+        include: {
+          phishingTemplate: { select: { slug: true, builtIn: true, htmlBody: true } },
+        },
+      },
+    },
   });
 
   if (!target) {
     notFound();
   }
 
-  return <FakeLoginForm token={token} />;
+  const slug = target.campaign.phishingTemplate?.slug ?? "microsoft";
+  const builtIn = target.campaign.phishingTemplate?.builtIn ?? true;
+  const htmlBody = target.campaign.phishingTemplate?.htmlBody ?? null;
+
+  return (
+    <PhishingPageRenderer
+      token={token}
+      slug={slug}
+      builtIn={builtIn}
+      htmlBody={htmlBody}
+    />
+  );
 }

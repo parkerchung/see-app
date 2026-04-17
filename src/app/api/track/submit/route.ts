@@ -14,6 +14,9 @@ export async function POST(request: NextRequest) {
 
   const target = await prisma.campaignTarget.findUnique({
     where: { token },
+    include: {
+      campaign: { select: { id: true, educationHtml: true } },
+    },
   });
 
   if (target) {
@@ -30,6 +33,11 @@ export async function POST(request: NextRequest) {
         },
       });
       await checkCampaignCompletion(target.id);
+    }
+
+    // If campaign has custom education HTML, redirect to the dynamic page
+    if (target.campaign.educationHtml) {
+      return NextResponse.json({ redirectUrl: `/education/${target.campaign.id}` });
     }
   }
 

@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
   if (error) return error;
 
   const body = await request.json();
-  const { name, templateId, employeeIds } = body;
+  const { name, templateId, phishingTemplateId, educationHtml, employeeIds } = body;
 
   if (!name || !templateId || !employeeIds?.length) {
     return NextResponse.json({ error: "缺少必填欄位" }, { status: 400 });
@@ -64,6 +64,8 @@ export async function POST(request: NextRequest) {
     data: {
       name,
       templateId,
+      phishingTemplateId: phishingTemplateId || null,
+      educationHtml: educationHtml || null,
       targets: {
         create: employeeIds.map((employeeId: string) => ({
           employeeId,

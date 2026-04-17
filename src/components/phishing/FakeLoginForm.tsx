@@ -1,30 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePhishingSubmit } from "./usePhishingSubmit";
 
 // SECURITY: This component renders a realistic-looking login form for the
 // phishing simulation. When submitted, it sends ONLY the tracking token to
 // the server. The email and password field values are NEVER transmitted.
 
 export default function FakeLoginForm({ token }: { token: string }) {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-
-    // SECURITY: Only send the token. Credential values are discarded.
-    const res = await fetch("/api/track/submit", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token }),
-    });
-
-    const data = await res.json();
-    router.push(data.redirectUrl || "/education");
-  }
+  const { loading, handleSubmit } = usePhishingSubmit(token);
 
   return (
     <div className="min-h-screen bg-[#f2f2f2] flex items-center justify-center">
