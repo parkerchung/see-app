@@ -11,15 +11,19 @@ export function usePhishingSubmit(token: string) {
     e.preventDefault();
     setLoading(true);
 
-    // SECURITY: Only send the token. Credential values are discarded.
-    const res = await fetch("/api/track/submit", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token }),
-    });
+    try {
+      // SECURITY: Only send the token. Credential values are discarded.
+      const res = await fetch("/api/track/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
 
-    const data = await res.json();
-    router.push(data.redirectUrl || "/education");
+      const data = await res.json();
+      router.push(data.redirectUrl || "/education");
+    } catch {
+      router.push("/education");
+    }
   }
 
   return { loading, handleSubmit };
