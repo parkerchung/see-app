@@ -48,14 +48,19 @@ export default function EducationSettingPage() {
     setLoading(false);
   }
 
-  function handleReset() {
-    setHtml("");
-    setSaved("");
-    fetch("/api/settings", {
+  async function handleReset() {
+    const res = await fetch("/api/settings", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ key: "educationHtml", value: "" }),
-    }).then(() => toast.success("已恢復為預設內容"));
+    });
+    if (res.ok) {
+      setHtml("");
+      setSaved("");
+      toast.success("已恢復為預設內容");
+    } else {
+      toast.error("恢復失敗");
+    }
   }
 
   return (

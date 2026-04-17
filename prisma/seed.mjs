@@ -25,44 +25,22 @@ async function main() {
     console.log("Admin already exists, skipping.");
   }
 
-  // Seed built-in phishing templates
-  const phishingTemplateCount = await prisma.phishingTemplate.count();
-  if (phishingTemplateCount === 0) {
-    await prisma.phishingTemplate.createMany({
-      data: [
-        {
-          name: "Microsoft 登入",
-          slug: "microsoft",
-          builtIn: true,
-        },
-        {
-          name: "Facebook 登入",
-          slug: "facebook",
-          builtIn: true,
-        },
-        {
-          name: "Instagram 登入",
-          slug: "instagram",
-          builtIn: true,
-        },
-        {
-          name: "玉山銀行 網路銀行",
-          slug: "esun-bank",
-          builtIn: true,
-        },
-        {
-          name: "中國醫藥大學 掛號查詢",
-          slug: "cmu-hospital",
-          builtIn: true,
-        },
-        {
-          name: "台中銀行 網路銀行",
-          slug: "taichung-bank",
-          builtIn: true,
-        },
-      ],
-    });
-    console.log("Built-in phishing templates created.");
+  // Seed built-in phishing templates (skip existing by slug)
+  const phishingTemplates = [
+    { name: "Microsoft 登入", slug: "microsoft", builtIn: true },
+    { name: "Facebook 登入", slug: "facebook", builtIn: true },
+    { name: "Instagram 登入", slug: "instagram", builtIn: true },
+    { name: "玉山銀行 網路銀行", slug: "esun-bank", builtIn: true },
+    { name: "中國醫藥大學 掛號查詢", slug: "cmu-hospital", builtIn: true },
+    { name: "台中銀行 網路銀行", slug: "taichung-bank", builtIn: true },
+  ];
+
+  for (const pt of phishingTemplates) {
+    const exists = await prisma.phishingTemplate.findUnique({ where: { slug: pt.slug } });
+    if (!exists) {
+      await prisma.phishingTemplate.create({ data: pt });
+      console.log(`Phishing template created: ${pt.name}`);
+    }
   }
 
   // Seed email templates (skip existing by name)

@@ -20,8 +20,8 @@ export async function PUT(request: NextRequest) {
   if (error) return error;
 
   const { key, value } = await request.json();
-  if (!key) {
-    return NextResponse.json({ error: "缺少 key" }, { status: 400 });
+  if (!key || typeof value !== "string") {
+    return NextResponse.json({ error: "缺少 key 或 value" }, { status: 400 });
   }
 
   const setting = await prisma.siteSetting.upsert({
