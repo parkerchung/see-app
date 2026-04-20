@@ -45,10 +45,13 @@ export async function GET(
   const bom = "\uFEFF";
   const csv = bom + header + rows;
 
+  const asciiFallback = `campaign-${campaign.id}-report.csv`;
+  const utf8Name = encodeURIComponent(`${campaign.name}-report.csv`);
+
   return new NextResponse(csv, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="${campaign.name}-report.csv"`,
+      "Content-Disposition": `attachment; filename="${asciiFallback}"; filename*=UTF-8''${utf8Name}`,
     },
   });
 }
