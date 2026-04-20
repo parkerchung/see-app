@@ -26,5 +26,9 @@ export function usePhishingSubmit(token: string) {
     }
   }
 
-  return { loading, handleSubmit };
+  function handleClose() {
+    router.push(`/education?token=${encodeURIComponent(token)}`);
+  }
+
+  return { loading, handleSubmit, handleClose };
 }

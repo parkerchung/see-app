@@ -6,14 +6,24 @@ export const dynamic = "force-dynamic";
 export default async function EducationPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tid?: string }>;
+  searchParams: Promise<{ tid?: string; token?: string }>;
 }) {
-  const { tid } = await searchParams;
+  const { tid, token } = await searchParams;
 
-  // If a template ID is provided, render that template
-  if (tid) {
+  // Resolve template ID: explicit tid takes priority, otherwise look up via token
+  let templateId = tid;
+  if (!templateId && token) {
+    const target = await prisma.campaignTarget.findUnique({
+      where: { token },
+      select: { campaign: { select: { educationTemplateId: true } } },
+    });
+    templateId = target?.campaign.educationTemplateId ?? undefined;
+  }
+
+  // If a template ID is resolved, render that template
+  if (templateId) {
     const template = await prisma.educationTemplate.findUnique({
-      where: { id: tid },
+      where: { id: templateId },
       select: { htmlBody: true },
     });
 

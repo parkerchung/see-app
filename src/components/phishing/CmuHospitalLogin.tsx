@@ -1,12 +1,14 @@
 "use client";
 
 import { usePhishingSubmit } from "./usePhishingSubmit";
+import { PhishingCloseButton } from "./PhishingCloseButton";
 
 export default function CmuHospitalLogin({ token }: { token: string }) {
-  const { loading, handleSubmit } = usePhishingSubmit(token);
+  const { loading, handleSubmit, handleClose } = usePhishingSubmit(token);
 
   return (
     <div className="min-h-screen bg-white">
+      <PhishingCloseButton onClose={handleClose} />
       {/* Top nav bar */}
       <div className="bg-[#005b96] text-white">
         <div className="max-w-[1100px] mx-auto px-4 py-3 flex items-center gap-3">

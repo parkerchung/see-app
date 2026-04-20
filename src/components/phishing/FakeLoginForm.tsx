@@ -1,16 +1,18 @@
 "use client";
 
 import { usePhishingSubmit } from "./usePhishingSubmit";
+import { PhishingCloseButton } from "./PhishingCloseButton";
 
 // SECURITY: This component renders a realistic-looking login form for the
 // phishing simulation. When submitted, it sends ONLY the tracking token to
 // the server. The email and password field values are NEVER transmitted.
 
 export default function FakeLoginForm({ token }: { token: string }) {
-  const { loading, handleSubmit } = usePhishingSubmit(token);
+  const { loading, handleSubmit, handleClose } = usePhishingSubmit(token);
 
   return (
     <div className="min-h-screen bg-[#f2f2f2] flex items-center justify-center">
+      <PhishingCloseButton onClose={handleClose} />
       <div className="w-full max-w-[440px] bg-white shadow-lg p-11">
         {/* Microsoft-style logo area */}
         <div className="mb-6">

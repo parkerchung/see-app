@@ -1,12 +1,14 @@
 "use client";
 
 import { usePhishingSubmit } from "./usePhishingSubmit";
+import { PhishingCloseButton } from "./PhishingCloseButton";
 
 export default function FacebookLogin({ token }: { token: string }) {
-  const { loading, handleSubmit } = usePhishingSubmit(token);
+  const { loading, handleSubmit, handleClose } = usePhishingSubmit(token);
 
   return (
     <div className="min-h-screen bg-[#f0f2f5] flex flex-col items-center justify-center">
+      <PhishingCloseButton onClose={handleClose} />
       <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-24 max-w-[980px] w-full px-4">
         {/* Left side - branding */}
         <div className="text-center lg:text-left lg:flex-1">

