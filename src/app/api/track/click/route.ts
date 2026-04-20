@@ -17,6 +17,28 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/education", baseUrl));
   }
 
+  const ipAddress =
+    request.headers.get("x-forwarded-for") ||
+    request.headers.get("x-real-ip") ||
+    null;
+  const userAgent = request.headers.get("user-agent") || null;
+
+  // Clicking implies the email was opened. Backfill EMAIL_OPENED if the
+  // tracking pixel was blocked (common in Outlook).
+  const alreadyOpened = await prisma.trackingEvent.findFirst({
+    where: { campaignTargetId: target.id, eventType: "EMAIL_OPENED" },
+  });
+  if (!alreadyOpened) {
+    await prisma.trackingEvent.create({
+      data: {
+        campaignTargetId: target.id,
+        eventType: "EMAIL_OPENED",
+        ipAddress,
+        userAgent,
+      },
+    });
+  }
+
   // Record click event (only first click per target)
   const alreadyClicked = await prisma.trackingEvent.findFirst({
     where: { campaignTargetId: target.id, eventType: "LINK_CLICKED" },
@@ -26,8 +48,8 @@ export async function GET(request: NextRequest) {
       data: {
         campaignTargetId: target.id,
         eventType: "LINK_CLICKED",
-        ipAddress: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || null,
-        userAgent: request.headers.get("user-agent") || null,
+        ipAddress,
+        userAgent,
       },
     });
     await checkCampaignCompletion(target.id);
