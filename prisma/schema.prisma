@@ -107,6 +107,8 @@ model TrackingEvent {
   ipAddress        String?
   userAgent        String?
   timestamp        DateTime       @default(now())
+
+  @@unique([campaignTargetId, eventType])
 }
 
 enum EventType {

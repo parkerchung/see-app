@@ -3,6 +3,9 @@ set -e
 
 PRISMA="node ./node_modules/prisma/build/index.js"
 
+echo "Cleaning up duplicate tracking events..."
+node ./prisma/cleanup-duplicates.mjs
+
 echo "Pushing database schema..."
 $PRISMA db push --skip-generate --accept-data-loss
 

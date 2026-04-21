@@ -20,18 +20,21 @@ export async function POST(request: NextRequest) {
   });
 
   if (target) {
-    const alreadySubmitted = await prisma.trackingEvent.findFirst({
-      where: { campaignTargetId: target.id, eventType: "CREDENTIALS_SUBMITTED" },
-    });
-    if (!alreadySubmitted) {
-      await prisma.trackingEvent.create({
-        data: {
+    const result = await prisma.trackingEvent.createMany({
+      data: [
+        {
           campaignTargetId: target.id,
           eventType: "CREDENTIALS_SUBMITTED",
-          ipAddress: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || null,
+          ipAddress:
+            request.headers.get("x-forwarded-for") ||
+            request.headers.get("x-real-ip") ||
+            null,
           userAgent: request.headers.get("user-agent") || null,
         },
-      });
+      ],
+      skipDuplicates: true,
+    });
+    if (result.count > 0) {
       await checkCampaignCompletion(target.id);
     }
 

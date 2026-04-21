@@ -54,11 +54,14 @@ export async function sendCampaign(campaignId: string) {
         html,
       });
 
-      await prisma.trackingEvent.create({
-        data: {
-          campaignTargetId: target.id,
-          eventType: "EMAIL_SENT",
-        },
+      await prisma.trackingEvent.createMany({
+        data: [
+          {
+            campaignTargetId: target.id,
+            eventType: "EMAIL_SENT",
+          },
+        ],
+        skipDuplicates: true,
       });
 
       successCount++;

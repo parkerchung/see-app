@@ -17,18 +17,21 @@ export async function GET(request: NextRequest) {
     });
 
     if (target) {
-      const alreadyOpened = await prisma.trackingEvent.findFirst({
-        where: { campaignTargetId: target.id, eventType: "EMAIL_OPENED" },
-      });
-      if (!alreadyOpened) {
-        await prisma.trackingEvent.create({
-          data: {
+      const result = await prisma.trackingEvent.createMany({
+        data: [
+          {
             campaignTargetId: target.id,
             eventType: "EMAIL_OPENED",
-            ipAddress: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || null,
+            ipAddress:
+              request.headers.get("x-forwarded-for") ||
+              request.headers.get("x-real-ip") ||
+              null,
             userAgent: request.headers.get("user-agent") || null,
           },
-        });
+        ],
+        skipDuplicates: true,
+      });
+      if (result.count > 0) {
         await checkCampaignCompletion(target.id);
       }
     }

@@ -24,34 +24,31 @@ export async function GET(request: NextRequest) {
   const userAgent = request.headers.get("user-agent") || null;
 
   // Clicking implies the email was opened. Backfill EMAIL_OPENED if the
-  // tracking pixel was blocked (common in Outlook).
-  const alreadyOpened = await prisma.trackingEvent.findFirst({
-    where: { campaignTargetId: target.id, eventType: "EMAIL_OPENED" },
-  });
-  if (!alreadyOpened) {
-    await prisma.trackingEvent.create({
-      data: {
+  // tracking pixel was blocked (common in Outlook). Skip if already recorded.
+  await prisma.trackingEvent.createMany({
+    data: [
+      {
         campaignTargetId: target.id,
         eventType: "EMAIL_OPENED",
         ipAddress,
         userAgent,
       },
-    });
-  }
-
-  // Record click event (only first click per target)
-  const alreadyClicked = await prisma.trackingEvent.findFirst({
-    where: { campaignTargetId: target.id, eventType: "LINK_CLICKED" },
+    ],
+    skipDuplicates: true,
   });
-  if (!alreadyClicked) {
-    await prisma.trackingEvent.create({
-      data: {
+
+  const clickResult = await prisma.trackingEvent.createMany({
+    data: [
+      {
         campaignTargetId: target.id,
         eventType: "LINK_CLICKED",
         ipAddress,
         userAgent,
       },
-    });
+    ],
+    skipDuplicates: true,
+  });
+  if (clickResult.count > 0) {
     await checkCampaignCompletion(target.id);
   }
 
