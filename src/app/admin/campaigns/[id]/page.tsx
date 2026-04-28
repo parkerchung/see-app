@@ -18,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowLeft, Send, Download, CheckCircle, XCircle } from "lucide-react";
+import { ArrowLeft, Send, Download, CheckCircle, XCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface Campaign {
@@ -87,6 +87,29 @@ export default function CampaignDetailPage() {
     setSending(false);
   }
 
+  async function handleDelete() {
+    if (!campaign) return;
+    if (campaign.status === "DRAFT") {
+      if (!confirm("確定要刪除此活動？")) return;
+    } else {
+      if (
+        !confirm(
+          "刪除已發送活動將連同所有追蹤事件（開信、點擊、提交記錄）一併移除，且無法復原。\n\n此外，員工信箱中已寄出的釣魚連結會失效，點擊後將看到 404 頁面。\n\n確定要繼續？"
+        )
+      )
+        return;
+      if (!confirm("再次確認：所有歷史統計資料將永久消失，是否刪除？")) return;
+    }
+    const res = await fetch(`/api/campaigns/${params.id}`, { method: "DELETE" });
+    if (res.ok) {
+      toast.success("活動已刪除");
+      router.push("/admin/campaigns");
+    } else {
+      const data = await res.json().catch(() => ({}));
+      toast.error(data.error || "刪除失敗");
+    }
+  }
+
   if (!campaign) {
     return <div className="text-gray-500">載入中...</div>;
   }
@@ -139,6 +162,12 @@ export default function CampaignDetailPage() {
                 匯出 CSV
               </Button>
             </a>
+          )}
+          {campaign.status !== "SENDING" && (
+            <Button variant="outline" onClick={handleDelete} className="text-red-600 hover:text-red-700">
+              <Trash2 className="h-4 w-4 mr-2" />
+              刪除活動
+            </Button>
           )}
         </div>
       </div>

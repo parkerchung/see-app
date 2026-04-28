@@ -38,6 +38,21 @@ export async function DELETE(
   if (error) return error;
 
   const { id } = await params;
+
+  const campaign = await prisma.campaign.findUnique({
+    where: { id },
+    select: { status: true },
+  });
+  if (!campaign) {
+    return NextResponse.json({ error: "活動不存在" }, { status: 404 });
+  }
+  if (campaign.status === "SENDING") {
+    return NextResponse.json(
+      { error: "活動正在發送中，請待發送結束後再刪除" },
+      { status: 409 }
+    );
+  }
+
   await prisma.campaign.delete({ where: { id } });
   return NextResponse.json({ success: true });
 }

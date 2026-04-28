@@ -48,14 +48,25 @@ export default function CampaignsPage() {
     load();
   }, [refreshKey]);
 
-  async function handleDelete(id: string) {
-    if (!confirm("確定要刪除此活動？")) return;
+  async function handleDelete(id: string, status: string) {
+    if (status === "DRAFT") {
+      if (!confirm("確定要刪除此活動？")) return;
+    } else {
+      if (
+        !confirm(
+          "刪除已發送活動將連同所有追蹤事件（開信、點擊、提交記錄）一併移除，且無法復原。\n\n此外，員工信箱中已寄出的釣魚連結會失效，點擊後將看到 404 頁面。\n\n確定要繼續？"
+        )
+      )
+        return;
+      if (!confirm("再次確認：所有歷史統計資料將永久消失，是否刪除？")) return;
+    }
     const res = await fetch(`/api/campaigns/${id}`, { method: "DELETE" });
     if (res.ok) {
       toast.success("活動已刪除");
       setRefreshKey((k) => k + 1);
     } else {
-      toast.error("刪除失敗");
+      const data = await res.json().catch(() => ({}));
+      toast.error(data.error || "刪除失敗");
     }
   }
 
@@ -115,11 +126,12 @@ export default function CampaignsPage() {
                             <Eye className="h-4 w-4" />
                           </Button>
                         </Link>
-                        {c.status === "DRAFT" && (
+                        {c.status !== "SENDING" && (
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleDelete(c.id)}
+                            onClick={() => handleDelete(c.id, c.status)}
+                            title={c.status === "DRAFT" ? "刪除活動" : "刪除活動（將清除所有統計資料）"}
                           >
                             <Trash2 className="h-4 w-4 text-red-500" />
                           </Button>
